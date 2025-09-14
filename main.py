@@ -33,15 +33,6 @@ def home():
 def health():
     return {"status": "healthy", "bot": "online"}
 
-def run_flask():
-    # Railway uses PORT environment variable
-    port = int(os.environ.get('PORT', 8080))
-    app.run(host='0.0.0.0', port=port, debug=False)
-
-# Start Flask server in a separate thread for Railway health checks
-flask_thread = threading.Thread(target=run_flask)
-flask_thread.daemon = True
-flask_thread.start()
 
 class CustomerKeyView(ui.View):
     """Custom view with Fetch Key and Reset HWID buttons"""
@@ -1206,4 +1197,11 @@ if __name__ == "__main__":
         print("Please set your Discord bot token in Railway Variables.")
     else:
         print("Starting Discord bot on Railway...")
-        bot.run(BOT_TOKEN)
+        # Start Discord bot in a separate thread
+        bot_thread = threading.Thread(target=bot.run, args=(BOT_TOKEN,))
+        bot_thread.daemon = True
+        bot_thread.start()
+        
+        # Start Flask server for health checks
+        port = int(os.environ.get('PORT', 8080))
+        app.run(host='0.0.0.0', port=port, debug=False)
